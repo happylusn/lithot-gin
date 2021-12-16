@@ -1,0 +1,11 @@
+server:
+  Port: 8080
+  Name: lithotWeb
+config:
+  db:
+    dialect: mysql
+    database: gin_test
+    username: root
+    password: '123456'
+    host: localhost
+    port: 3306

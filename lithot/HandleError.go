@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	HTTP_STATUS = "GOFT_STATUS"
+	HTTP_STATUS = "LITHOT_STATUS"
 )
 
 func panicTrace(kb int) string {
@@ -19,7 +19,9 @@ func panicTrace(kb int) string {
 	stack := make([]byte, kb<<10) //4KB
 	length := runtime.Stack(stack, true)
 	start := bytes.Index(stack, s)
-	stack = stack[start:length]
+	if start != -1 {
+		stack = stack[start:length]
+	}
 	start = bytes.Index(stack, line) + 1
 	stack = stack[start:]
 	end := bytes.LastIndex(stack, line)
@@ -39,10 +41,14 @@ func printError(err interface{}) {
 	}
 	log.Println(err)
 }
-func ErrorHandler() gin.HandlerFunc {
+func ErrorHandler(lithot *Lithot) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		defer func() {
 			if e := recover(); e != nil {
+				if lithot.errorHandle != nil {
+					lithot.errorHandle(context, e)
+					return
+				}
 				if os.Getenv("GIN_MODE") != "release" {
 					log.Println(panicTrace(10))
 				}
@@ -62,9 +68,7 @@ func ErrorHandler() gin.HandlerFunc {
 					} else {
 						context.AbortWithStatusJSON(status, e)
 					}
-
 				}
-
 			}
 		}()
 		context.Next()

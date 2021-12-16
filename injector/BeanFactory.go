@@ -39,10 +39,11 @@ func (this *BeanFactoryImpl) Config(cfgs ...interface{}) {
 		v := reflect.ValueOf(cfg)
 		for i := 0; i < t.NumMethod(); i++ {
 			method := v.Method(i)
-			callRet := method.Call(nil)
-
-			if callRet != nil && len(callRet) == 1 {
-				this.Set(callRet[0].Interface())
+			if method.Type().NumIn() == 0 {
+				callRet := method.Call(nil)
+				if callRet != nil && len(callRet) == 1 {
+					this.Set(callRet[0].Interface())
+				}
 			}
 		}
 	}

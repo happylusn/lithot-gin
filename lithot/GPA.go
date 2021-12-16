@@ -7,6 +7,7 @@ import (
 	"github.com/happylusn/lithot-gin/injector"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type GPAUtil struct {
@@ -43,6 +44,18 @@ func asString(src interface{}) string {
 	}
 	return fmt.Sprintf("%v", src)
 }
+
+func autoTransCell(src interface{}) interface{} {
+	switch v := src.(type) {
+	case []byte:
+		return string(v)
+	case time.Time:
+		return v.Format("2006-01-02 15:04:05")
+	default:
+		return src
+	}
+}
+
 func DBMap(columns []string, rows *sql.Rows) ([]interface{}, error) {
 	allRows := make([]interface{}, 0) //所有行  大切片
 	for rows.Next() {
@@ -57,7 +70,7 @@ func DBMap(columns []string, rows *sql.Rows) ([]interface{}, error) {
 			return nil, err
 		}
 		for i, val := range oneRow {
-			fieldMap[columns[i]] = asString(val)
+			fieldMap[columns[i]] = autoTransCell(val) // asString(val)
 		}
 		allRows = append(allRows, fieldMap)
 	}
@@ -78,6 +91,9 @@ func queryForMapsByInterface(query Query) (interface{}, error) {
 	if query.First() && ret != nil && len(ret) > 0 {
 		return wrapResult(query, ret[0]), nil
 	}
+	if query.First() && len(ret) == 0 {
+		ret = nil
+	}
 	return wrapResult(query, ret), nil
 }
 func queryForMaps(sql string, mapping map[string]string, args ...interface{}) ([]interface{}, error) {
@@ -86,15 +102,15 @@ func queryForMaps(sql string, mapping map[string]string, args ...interface{}) ([
 		panic("found no GPA-Object")
 	}
 	stmt, err := gpa_bean.GDB.DB().Prepare(sql)
-	defer stmt.Close()
 	if err != nil {
 		panic(fmt.Errorf("sql-error:%s", err.Error()))
 	}
+	defer stmt.Close()
 	rows, err := stmt.Query(args...)
-	defer rows.Close()
 	if err != nil {
 		panic(fmt.Errorf("sqlquery-error:%s", err.Error()))
 	}
+	defer rows.Close()
 	cols, err := rows.Columns()
 	if err != nil {
 		panic(fmt.Errorf("sqlcolumn-error:%s", err.Error()))

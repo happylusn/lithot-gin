@@ -30,13 +30,19 @@ type Lithot struct {
 	g            *gin.RouterGroup // 保存 group对象
 	exprData     map[string]interface{}
 	currentGroup string // temp-var for group string
+	errorHandle  ErrorHandle
 }
 
-func Ignite(ginMiddlewares ...gin.HandlerFunc) *Lithot {
+// 404处理
+func HandleNotFound(c *gin.Context) {
+	Throw("Not Found", 404, c)
+}
+
+func NewLithot(ginMiddlewares ...gin.HandlerFunc) *Lithot {
 	g := &Lithot{Engine: gin.New(),
 		exprData: map[string]interface{}{},
 	}
-	g.Use(ErrorHandler()) //强迫加载的异常处理中间件
+	g.Use(gin.Logger(), ErrorHandler(g)) //强迫加载的异常处理中间件
 	for _, handler := range ginMiddlewares {
 		g.Use(handler)
 	}
@@ -114,8 +120,9 @@ func (this *Lithot) Beans(beans ...Bean) *Lithot {
 	}
 	return this
 }
-func (this *Lithot) Config(cfgs ...interface{}) *Lithot {
-	injector.BeanFactory.Config(cfgs...)
+
+func (this *Lithot) Configure(configurations ...interface{}) *Lithot {
+	injector.BeanFactory.Config(configurations...)
 	return this
 }
 func (this *Lithot) applyAll() {
@@ -124,6 +131,12 @@ func (this *Lithot) applyAll() {
 			injector.BeanFactory.Apply(v.Interface())
 		}
 	}
+}
+func (this *Lithot) GetSysConfig() *SysConfig {
+	if config := injector.BeanFactory.Get((*SysConfig)(nil)); config != nil {
+		return config.(*SysConfig)
+	}
+	return nil
 }
 
 func (this *Lithot) Mount(group string, controllers ...Controller) *Lithot {
@@ -153,5 +166,12 @@ func (this *Lithot) Task(cron string, expr interface{}) *Lithot {
 	if err != nil {
 		log.Println(err)
 	}
+	return this
+}
+
+type ErrorHandle func(c *gin.Context, err interface{})
+
+func (this *Lithot) SetErrorHandle(f ErrorHandle) *Lithot {
+	this.errorHandle = f
 	return this
 }
