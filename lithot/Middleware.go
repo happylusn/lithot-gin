@@ -16,6 +16,7 @@ var middleware_once sync.Once
 type MiddlewareHandler struct {
 	middlewares []Middleware
 }
+
 func getMiddlewareHandler() *MiddlewareHandler {
 	middleware_once.Do(func() {
 		middlewareHandler = &MiddlewareHandler{}
@@ -37,7 +38,8 @@ func (this *MiddlewareHandler) before(ctx *gin.Context) {
 	for _, m := range this.middlewares {
 		err := m.OnRequest(ctx)
 		if err != nil {
-			Throw(err.Error(), 400, ctx)
+			//Throw(err.Error(), 400, ctx)
+			panic(err)
 		}
 	}
 }
@@ -47,7 +49,8 @@ func (this *MiddlewareHandler) after(ctx *gin.Context, ret interface{}) interfac
 	for _, m := range this.middlewares {
 		r, err := m.OnResponse(result)
 		if err != nil {
-			Throw(err.Error(), 400, ctx)
+			//Throw(err.Error(), 400, ctx)
+			panic(err)
 		}
 		result = r
 	}
