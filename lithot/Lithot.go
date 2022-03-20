@@ -70,16 +70,7 @@ func (this *Lithot) LaunchWithPort(port int) {
 	getCronTask().Start()
 	this.Run(fmt.Sprintf(":%d", port))
 }
-func (this *Lithot) Handle(httpMethod, relativePath string, handler interface{}) *Lithot {
-	if h := Convert(handler); h != nil {
-		methods := strings.Split(httpMethod, ",")
-		for _, method := range methods {
-			getInnerRouter().addRoute(method, this.getPath(relativePath), h) // for future
-			this.g.Handle(method, relativePath, h)
-		}
-	}
-	return this
-}
+
 func (this *Lithot) getPath(relativePath string) string {
 	g := "/" + this.currentGroup
 	if g == "/" {
@@ -89,7 +80,31 @@ func (this *Lithot) getPath(relativePath string) string {
 	g = strings.Replace(g, "//", "/", -1)
 	return g
 }
-func (this *Lithot) HandleWithMiddleware(httpMethod, relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+func (this *Lithot) Handle(httpMethod, relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle(httpMethod, relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) GET(relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle("GET", relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) POST(relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle("POST", relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) PUT(relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle("PUT", relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) PATCH(relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle("PATCH", relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) DELETE(relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
+	return this.handle("DELETE", relativePath, handler, middlewares...)
+}
+
+func (this *Lithot) handle(httpMethod, relativePath string, handler interface{}, middlewares ...Middleware) *Lithot {
 	if h := Convert(handler); h != nil {
 		methods := strings.Split(httpMethod, ",")
 		for _, f := range middlewares {
@@ -99,7 +114,6 @@ func (this *Lithot) HandleWithMiddleware(httpMethod, relativePath string, handle
 			getInnerRouter().addRoute(method, this.getPath(relativePath), middlewares) //for future
 			this.g.Handle(method, relativePath, h)
 		}
-
 	}
 	return this
 }
