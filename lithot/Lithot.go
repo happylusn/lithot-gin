@@ -189,3 +189,13 @@ func (this *Lithot) SetErrorHandle(f ErrorHandle) *Lithot {
 	this.errorHandle = f
 	return this
 }
+
+func (this *Lithot) Static(relativePath, root string) *Lithot {
+	this.Engine.Static(relativePath, root)
+	return this
+}
+
+func (this *Lithot) LoadHTMLGlob(pattern string) *Lithot {
+	this.Engine.LoadHTMLGlob(pattern)
+	return this
+}
