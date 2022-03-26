@@ -199,3 +199,8 @@ func (this *Lithot) LoadHTMLGlob(pattern string) *Lithot {
 	this.Engine.LoadHTMLGlob(pattern)
 	return this
 }
+
+func (this *Lithot) NoRoute(handlers ...gin.HandlerFunc) *Lithot {
+	this.Engine.NoRoute(handlers...)
+	return this
+}
